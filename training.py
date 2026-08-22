@@ -1,3 +1,4 @@
+import torch
 from deep_url import DeepURL, deep_url_loss
 
 def train_deep_url(
@@ -7,6 +8,7 @@ def train_deep_url(
     epochs=5000,
     lr=0.1,
     lambda_tv=0.1,
+    model_path='model/deep_url.pth',
     device="cuda"
 ):
 
@@ -63,7 +65,7 @@ def train_deep_url(
 
         scheduler.step()
 
-        if epoch % 100 == 0:
+        if epoch % 10 == 0:
 
             print(
                 f"Epoch [{epoch:4d}/{epochs}] "
@@ -83,7 +85,7 @@ def train_deep_url(
             "kernel_size": kernel_size,
             "num_layers": num_layers,
         },
-        "deep_url.pth"
+        model_path
     )
 
     return model, x_hat, H_hat

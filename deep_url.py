@@ -69,7 +69,7 @@ class DeepURLLayer(nn.Module):
         # Atualização do kernel
         H_next = H * (
             1.0 + self.alpha_H * correction_H
-        )
+        )[: ,: , :H.shape[-2],:H.shape[-1]]
 
         # ---------------------------------------------------------
         # 2. Garantir H >= 0

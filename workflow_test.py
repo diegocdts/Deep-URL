@@ -9,7 +9,7 @@ from deep_url import DeepURL
 # 1. CONFIGURAÇÕES
 # ============================================================
 
-NPY_PATH = "teste.npy"
+NPY_PATH = "/home/data/IMG.npy"
 MODEL_PATH = "deep_url.pth"
 
 OUTPUT_X_PATH = "x_hat.npy"

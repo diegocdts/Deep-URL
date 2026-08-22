@@ -7,10 +7,10 @@ from training import train_deep_url
 # 1. CONFIGURAÇÕES
 # ============================================================
 
-NPY_PATH = "images/IN.npy"
-KERNEL_SIZE = 3
+NPY_PATH = "/home/data/IN.npy"
+KERNEL_SIZE = 15
 NUM_LAYERS = 5
-EPOCHS = 2
+EPOCHS = 5000
 LR = 0.1
 LAMBDA_TV = 0.1
 
@@ -18,7 +18,7 @@ MODEL_PATH = f'model/deep_url_{KERNEL_SIZE}_{NUM_LAYERS}_{EPOCHS}_{LR}_{LAMBDA_T
 
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
-os.makedirs(MODEL_PATH, exist_ok=True)
+os.makedirs('/home/src/model', exist_ok=True)
 
 # ============================================================
 # 2. CARREGA IMAGEM BLURRED
@@ -33,7 +33,7 @@ y = (y - y.min()) / (
 )
 
 y = torch.from_numpy(y)
-y = y.reshape(50, 352, 1400)
+y = y.reshape(50, 352, 1400)[0]
 
 # ------------------------------------------------------------
 # O modelo espera:
@@ -54,10 +54,10 @@ if y.ndim == 2:
     y = y.unsqueeze(0).unsqueeze(0)
 
 
-# Caso já esteja no formato [B, H, W]
+# Caso já esteja no formato [C, H, W]
 elif y.ndim == 3:
 
-    y = y.unsqueeze(1)
+    y = y.unsqueeze(0)
 
 
 else:
@@ -78,7 +78,8 @@ model, x_hat, H_hat = train_deep_url(
     num_layers=NUM_LAYERS,
     epochs=EPOCHS,
     lr=LR,
-    lambda_tv=LAMBDA_TV
+    lambda_tv=LAMBDA_TV,
+    model_path=MODEL_PATH
 )
 
 print("Imagem recuperada:", x_hat.shape)
