@@ -76,7 +76,7 @@ def conv_same(image: torch.Tensor, kernel: torch.Tensor) -> torch.Tensor:
     return F.conv2d(image, kernel, padding=pad)
 
 
-    def kernel_update_correlation(ratio: torch.Tensor, x_k: torch.Tensor,
+def kernel_update_correlation(ratio: torch.Tensor, x_k: torch.Tensor,
                                kernel_size: int) -> torch.Tensor:
     """Calcula o termo `(y / ReLU(x^k (*) W_H^k)) (*) x^{k}dagger` da
     Eq. (5a), cujo resultado deve ter o TAMANHO DO KERNEL (k x k), e não o
