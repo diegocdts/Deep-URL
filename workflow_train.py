@@ -25,7 +25,7 @@ os.makedirs(MODEL_DIR, exist_ok=True)
 # 7. CARREGA IMAGEM BLURRED
 # ============================================================
 
-y = np.load(NPY_PATH).astype("float64")
+y = np.load(NPY_PATH).astype("float32")
 y = (y - y.mean()) / (3 * y.std()) # aplica normalização zScore com n_std = 3
 y = torch.from_numpy(y)
 y = y.reshape(50, 352, 1400)

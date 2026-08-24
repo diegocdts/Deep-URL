@@ -30,7 +30,7 @@ OUTPUT_FIG_PATH = f'{RESULTS_DIR}/output.png'
 # 10. CARREGAR OS DADOS
 # ============================================================
 
-y = np.load(NPY_PATH).astype("float64")
+y = np.load(NPY_PATH).astype("float32")
 y = (y - y.mean()) / (3 * y.std()) # aplica normalização zScore com n_std = 3
 y = torch.from_numpy(y)
 y = y.reshape(50, 352, 1400)
