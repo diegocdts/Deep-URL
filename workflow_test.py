@@ -6,85 +6,46 @@ import matplotlib.pyplot as plt
 from deep_url import DeepURL
 
 # ============================================================
-# 1. CONFIGURAÇÕES
+# 9. CONFIGURAÇÕES
 # ============================================================
 
 NPY_PATH = "/home/data/IMG.npy"
-MODEL_PATH = "deep_url.pth"
-
-OUTPUT_X_PATH = "x_hat.npy"
-OUTPUT_H_PATH = "H_hat.npy"
-
+KERNEL_SIZE = 15
+NUM_LAYERS = 5
+EPOCHS = 5000
+LR = 0.1
+LAMBDA_TV = 0.1
+MODEL_PATH = f'/home/src/model/deep_url_{KERNEL_SIZE}_{NUM_LAYERS}_{EPOCHS}_{LR}_{LAMBDA_TV}.pth'
+RESULTS_DIR = f'/home/src/results/deep_url_{KERNEL_SIZE}_{NUM_LAYERS}_{EPOCHS}_{LR}_{LAMBDA_TV}'
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
+os.makedirs(RESULTS_DIR, exist_ok=True)
 
-# ============================================================
-# 2. CARREGAR OS DADOS
-# ============================================================
-
-y = np.load(NPY_PATH)
-
-print("Shape original:", y.shape)
-print("Dtype:", y.dtype)
+OUTPUT_X_PATH = f'{RESULTS_DIR}/x_hat.npy'
+OUTPUT_H_PATH = f'{RESULTS_DIR}/H_hat.npy'
+OUTPUT_FIG_PATH = f'{RESULTS_DIR}/output.png'
 
 
 # ============================================================
-# 3. NORMALIZAÇÃO
+# 10. CARREGAR OS DADOS
 # ============================================================
 
-y_min = y.min()
-y_max = y.max()
-
-y = (y - y_min) / (y_max - y_min + 1e-8)
-
-y = y.astype(np.float32)
-
-
-# ============================================================
-# 4. CONVERTER PARA TENSOR
-# ============================================================
-
+y = np.load(NPY_PATH).astype("float64")
+y = y.mean() / (3 * y.std()) # aplica normalização zScore com n_std = 3
 y = torch.from_numpy(y)
 y = y.reshape(50, 352, 1400)
 
-# ------------------------------------------------------------
-# O modelo espera:
-#
-# [batch, channel, height, width]
-#
-# Caso o .npy tenha:
-#
-# [H, W]
-#
-# transformamos em:
-#
-# [1, 1, H, W]
-# ------------------------------------------------------------
-
-if y.ndim == 2:
-
-    y = y.unsqueeze(0).unsqueeze(0)
-
-
-# Caso já esteja no formato [B, H, W]
-elif y.ndim == 3:
-
+if y.ndim == 3 and y.shape[0] > 3:
     y = y.unsqueeze(1)
-
-
+elif y.ndim == 2:
+    y = y.unsqueeze(0).unsqueeze(0)
 else:
-    raise ValueError(
-        f"Formato não suportado: {y.shape}"
-    )
-
-
-y = y.to(DEVICE)
-
-print("Shape usado pelo modelo:", y.shape)
+    raise ValueError(f"Formato não suportado: {y.shape}")
+print(f'Shape do dado blurred: {y.shape}')
 
 
 # ============================================================
-# 5. CARREGAR O CHECKPOINT
+# 11. CARREGAR O CHECKPOINT
 # ============================================================
 
 checkpoint = torch.load(
@@ -98,7 +59,7 @@ print("Número de layers:", checkpoint["num_layers"])
 
 
 # ============================================================
-# 6. RECRIAR A ARQUITETURA
+# 12. RECRIAR A ARQUITETURA
 # ============================================================
 
 model = DeepURL(
@@ -108,7 +69,7 @@ model = DeepURL(
 
 
 # ============================================================
-# 7. CARREGAR OS PESOS
+# 13. CARREGAR OS PESOS
 # ============================================================
 
 model.load_state_dict(
@@ -119,7 +80,7 @@ model.eval()
 
 
 # ============================================================
-# 8. TESTE / INFERÊNCIA
+# 14. TESTE / INFERÊNCIA
 # ============================================================
 
 with torch.no_grad():
@@ -128,7 +89,7 @@ with torch.no_grad():
 
 
 # ============================================================
-# 9. CONVERTER RESULTADOS PARA NUMPY
+# 15. CONVERTER RESULTADOS PARA NUMPY
 # ============================================================
 
 x_hat = x_hat.squeeze().cpu().numpy()
@@ -141,7 +102,7 @@ print("H_hat:", H_hat.shape)
 
 
 # ============================================================
-# 10. SALVAR RESULTADOS
+# 16. SALVAR RESULTADOS
 # ============================================================
 
 np.save(
@@ -160,7 +121,7 @@ print(OUTPUT_H_PATH)
 
 
 # ============================================================
-# 11. VISUALIZAÇÃO
+# 17. VISUALIZAÇÃO
 # ============================================================
 
 plt.figure(figsize=(15, 5))
@@ -169,7 +130,7 @@ plt.subplot(1, 3, 1)
 
 plt.imshow(
     y.squeeze().cpu().numpy(),
-    cmap="gray"
+    cmap="seismic"
 )
 
 plt.title("Imagem de entrada (y)")
@@ -180,7 +141,7 @@ plt.subplot(1, 3, 2)
 
 plt.imshow(
     x_hat,
-    cmap="gray"
+    cmap="seismic"
 )
 
 plt.title("Imagem recuperada (x_hat)")
@@ -191,12 +152,11 @@ plt.subplot(1, 3, 3)
 
 plt.imshow(
     H_hat,
-    cmap="gray"
+    cmap="seismic"
 )
 
 plt.title("Kernel estimado (H_hat)")
 plt.axis("off")
 
-
 plt.tight_layout()
-plt.show()
+plt.savefig(OUTPUT_FIG_PATH, bbox_inches='tight')
