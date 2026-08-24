@@ -92,7 +92,7 @@ def train_deep_url(y: torch.Tensor, kernel_size: int = 15, num_layers: int = 5,
     for epoch in range(1, epochs + 1):
         optimizer.zero_grad()
         x_L, H_L = model(y, x0, H0)                 # laço interno (linhas 2-5)
-        loss, _ = deep_url_loss(y, x_L, H_L, lam)    # linha 6: gradiente de Eq. (6)
+        loss, _ = deep_url_loss(y, x_L, H_L, lambda_tv)    # linha 6: gradiente de Eq. (6)
         loss.backward()
         optimizer.step()                             # linha 7: atualiza Upsilon
         scheduler.step()
