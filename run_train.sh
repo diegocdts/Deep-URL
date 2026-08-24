@@ -3,8 +3,8 @@
 #SBATCH --partition=tc
 #SBATCH -A mddlgp
 #SBATCH -J DL
-#SBATCH --nodes=2
-#SBATCH --ntasks-per-node=4
+#SBATCH --nodes=1
+#SBATCH --ntasks-per-node=1
 #SBATCH --cpus-per-task=8
 #SBATCH --gres=gpu:4
 #SBATCH --time=100:00:00
@@ -25,5 +25,5 @@ srun singularity exec \
 -B ${DIR_SRC}:/home/src \
 -B ${DIR_DATA}:/home/data \
 --nv ${DIR_CONT}/pytorch-ngc-digitalrockframework-14082024.sif \
-python /home/src/workflow_train.py \
+python -u /home/src/workflow_train.py \
 --config_idx $SLURM_ARRAY_TASK_ID

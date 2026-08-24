@@ -24,6 +24,6 @@ DIR_CONT="/beegfs/gaia/tcs/ufrj_ml_u30s/containers"
 srun singularity exec \
 -B ${DIR_SRC}:/home/src \
 -B ${DIR_DATA}:/home/data \
---nv ${DIR_CONT}/pytorch.sif \
-python /home/src/code/workflow_train.py \
+--nv ${DIR_CONT}/pytorch-ngc-digitalrockframework-14082024.sif \
+python -u /home/src/workflow_test.py \
 --config_idx $SLURM_ARRAY_TASK_ID

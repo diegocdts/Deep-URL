@@ -101,7 +101,7 @@ def train_deep_url(y: torch.Tensor, kernel_size: int = 15, num_layers: int = 5,
         x0 = x_L.detach()
         H0 = H_L.detach()
  
-        if verbose and (epoch % max(1, epochs // 10) == 0 or epoch == 1):
+        if verbose and (epoch % max(1, epochs // 100) == 0 or epoch == 1):
             print(f"  época {epoch:4d}/{epochs} - perda: {loss.item():.4f}")
     
     # Salvar modelo

@@ -1,3 +1,4 @@
+import os
 import numpy as np
 import torch
 import torch.nn.functional as F
@@ -12,7 +13,7 @@ from deep_url import DeepURL
 NPY_PATH = "/home/data/IMG.npy"
 KERNEL_SIZE = 15
 NUM_LAYERS = 5
-EPOCHS = 5000
+EPOCHS = 500
 LR = 0.1
 LAMBDA_TV = 0.1
 MODEL_PATH = f'/home/src/model/deep_url_{KERNEL_SIZE}_{NUM_LAYERS}_{EPOCHS}_{LR}_{LAMBDA_TV}.pth'
@@ -62,10 +63,10 @@ print("Número de layers:", checkpoint["num_layers"])
 # 12. RECRIAR A ARQUITETURA
 # ============================================================
 
-model = DeepURL(
-    kernel_size=checkpoint["kernel_size"],
-    num_layers=checkpoint["num_layers"]
-).to(DEVICE)
+model = DeepURL(num_layers=NUM_LAYERS, 
+                kernel_size=KERNEL_SIZE, 
+                image_H=y.shape[-2], 
+                image_W=y.shape[-1]).to(DEVICE)
 
 
 # ============================================================

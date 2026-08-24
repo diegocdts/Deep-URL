@@ -1,2 +1,5 @@
 images/*
 __pycache__
+slurms
+results
+model

@@ -11,14 +11,16 @@ from training import train_deep_url
 NPY_PATH = "/home/data/IN.npy"
 KERNEL_SIZE = 15
 NUM_LAYERS = 5
-EPOCHS = 5000
+EPOCHS = 500
 LR = 0.1
 LAMBDA_TV = 0.1
 MODEL_DIR = '/home/src/model'
+RESULTS_DIR = f'/home/src/results/deep_url_{KERNEL_SIZE}_{NUM_LAYERS}_{EPOCHS}_{LR}_{LAMBDA_TV}'
 MODEL_PATH = f'/home/src/model/deep_url_{KERNEL_SIZE}_{NUM_LAYERS}_{EPOCHS}_{LR}_{LAMBDA_TV}.pth'
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
 os.makedirs(MODEL_DIR, exist_ok=True)
+os.makedirs(RESULTS_DIR, exist_ok=True)
 
 
 # ============================================================
@@ -51,8 +53,15 @@ x_hat, H_hat, model = train_deep_url(
     epochs=EPOCHS,
     lr=LR,
     lambda_tv=LAMBDA_TV,
+    device=DEVICE,
     model_path=MODEL_PATH
 )
+
+x0_np = x_hat.cpu().numpy
+H0_np = H_hat.cpu().numpy 
+
+np.save(f'{RESULTS_DIR}/x0_np.npy', x0_np)
+np.save(f'{RESULTS_DIR}/H0_np.npy', H0_np)
 
 print("Imagem recuperada:", x_hat.shape)
 print("Kernel estimado:", H_hat.shape)
