@@ -15,6 +15,8 @@
 
 nodeset -e $SLURM_JOB_NODELIST
 
+echo "Job ID: $SLURM_JOB_ID"
+
 cd $SLURM_SUBMIT_DIR
 
 DIR_SRC=${SLURM_SUBMIT_DIR}

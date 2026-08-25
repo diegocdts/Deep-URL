@@ -48,16 +48,17 @@ transparência, já que o artigo não fornece código-fonte):
 
 import torch
 from deep_url import DeepURL, deep_url_loss
+from visualization import plot_lower_loss
 
 
 # ---------------------------------------------------------------------------
 # 5. TREINAMENTO AUTO-SUPERVISIONADO -- Algoritmo 1 do artigo
 # ---------------------------------------------------------------------------
  
-def train_deep_url(y: torch.Tensor, kernel_size: int = 15, num_layers: int = 5,
+def train_deep_url(y: torch.Tensor, x: torch.Tensor = None, kernel_size: int = 15, num_layers: int = 5,
                     epochs: int = 500, lr: float = 0.1, lambda_tv: float = 0.1,
                     decay_factor: float = 0.1, device: str = "cpu",
-                    verbose: bool = True, model_path: str = "/home/src/model/deep_url.pth"):
+                    verbose: bool = True, model_path: str = None, results_dir = None):
     """
     Reproduz o Algoritmo 1 (DEEP-URL) do artigo.
  
@@ -77,6 +78,8 @@ def train_deep_url(y: torch.Tensor, kernel_size: int = 15, num_layers: int = 5,
     y = y.to(device)
     B, C, H_img, W_img = y.shape
     assert C == 1, "Esta implementação assume imagens em escala de cinza."
+    assert model_path is not None, "O path para o modelo precisa ser definido"
+    assert results_dir is not None, "O diretório de resultados precisa ser definido"
  
     model = DeepURL(num_layers, kernel_size, H_img, W_img).to(device)
     optimizer = torch.optim.RMSprop(model.parameters(), lr=lr)
@@ -88,13 +91,15 @@ def train_deep_url(y: torch.Tensor, kernel_size: int = 15, num_layers: int = 5,
     # Linha "Initialize": H^0 ~ U(0,1), x^0 ~ U(0,1)
     H0 = torch.rand(1, 1, kernel_size, kernel_size, device=device)
     x0 = torch.rand(B, 1, H_img, W_img, device=device)
+
+    lower_loss = None
  
     for epoch in range(1, epochs + 1):
         optimizer.zero_grad()
-        x_L, H_L = model(y, x0, H0)                 # laço interno (linhas 2-5)
-        loss, _ = deep_url_loss(y, x_L, H_L, lambda_tv)    # linha 6: gradiente de Eq. (6)
+        x_L, H_L = model(y, x0, H0)                                      # laço interno (linhas 2-5)
+        loss, _ssim, x_tv, _ = deep_url_loss(y, x_L, H_L, lambda_tv)    # linha 6: gradiente de Eq. (6)
         loss.backward()
-        optimizer.step()                             # linha 7: atualiza Upsilon
+        optimizer.step()                                                 # linha 7: atualiza Upsilon
         scheduler.step()
  
         # Linha 8: realimenta o estado para a próxima época
@@ -102,7 +107,12 @@ def train_deep_url(y: torch.Tensor, kernel_size: int = 15, num_layers: int = 5,
         H0 = H_L.detach()
  
         if verbose and (epoch % max(1, epochs // 100) == 0 or epoch == 1):
-            print(f"  época {epoch:4d}/{epochs} - perda: {loss.item():.4f}")
+            print(f"  época {epoch:4d}/{epochs} - perda: {loss.item():.4f} - _ssim: {_ssim:.4f} - x_tv: {x_tv:.4f}")
+
+        if lower_loss is None or loss < lower_loss:
+            lower_loss = loss
+            plot_lower_loss(blur_image=y.detach().cpu().numpy(), x_hat=x0.cpu().numpy(), ground_truth=x, results_dir=results_dir, epoch=epoch)          
+
     
     # Salvar modelo
     torch.save(
