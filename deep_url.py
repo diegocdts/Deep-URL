@@ -49,7 +49,7 @@ transparência, já que o artigo não fornece código-fonte):
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
- 
+from skimage.metrics import structural_similarity as ssim
  
 # ---------------------------------------------------------------------------
 # 1. OPERAÇÕES BÁSICAS: convolução, flip e a "correlação restrita ao kernel"
@@ -123,36 +123,9 @@ def kernel_update_correlation(ratio: torch.Tensor, x_k: torch.Tensor,
 # ---------------------------------------------------------------------------
 # 2. FUNÇÃO DE PERDA: SSIM negativa + regularização TV, Eq. (6)
 # ---------------------------------------------------------------------------
-
-def _gaussian_window_1d(window_size: int, sigma: float) -> torch.Tensor:
-    coords = torch.arange(window_size, dtype=torch.float32) - window_size // 2
-    g = torch.exp(-(coords ** 2) / (2 * sigma ** 2))
-    return g / g.sum()
  
- 
-def _create_ssim_window(window_size: int = 11, sigma: float = 1.5) -> torch.Tensor:
-    g1d = _gaussian_window_1d(window_size, sigma)
-    window2d = g1d.unsqueeze(1) @ g1d.unsqueeze(0)
-    return window2d.unsqueeze(0).unsqueeze(0)  # (1,1,ws,ws)
- 
- 
-def ssim(img1: torch.Tensor, img2: torch.Tensor, window_size: int = 11) -> torch.Tensor:
-    """SSIM diferenciável (janela gaussiana), referência [22] do artigo."""
-    window = _create_ssim_window(window_size).to(img1.device)
-    pad = window_size // 2
- 
-    mu1 = F.conv2d(img1, window, padding=pad)
-    mu2 = F.conv2d(img2, window, padding=pad)
-    mu1_sq, mu2_sq, mu1_mu2 = mu1 * mu1, mu2 * mu2, mu1 * mu2
- 
-    sigma1_sq = F.conv2d(img1 * img1, window, padding=pad) - mu1_sq
-    sigma2_sq = F.conv2d(img2 * img2, window, padding=pad) - mu2_sq
-    sigma12 = F.conv2d(img1 * img2, window, padding=pad) - mu1_mu2
- 
-    C1, C2 = 0.01 ** 2, 0.03 ** 2
-    ssim_map = ((2 * mu1_mu2 + C1) * (2 * sigma12 + C2)) / \
-               ((mu1_sq + mu2_sq + C1) * (sigma1_sq + sigma2_sq + C2))
-    return ssim_map.mean()
+def ssim4deep_url(img1: torch.Tensor, img2: torch.Tensor, data_range: float = 1.0) -> torch.Tensor:
+    return ssim(img1.detach().cpu().numpy().squeeze(),img2.detach().cpu().numpy().squeeze(),data_range=data_range)
  
  
 def tv_loss(img: torch.Tensor) -> torch.Tensor:
@@ -168,7 +141,7 @@ def deep_url_loss(y: torch.Tensor, x_L: torch.Tensor, H_L: torch.Tensor,
     L(.) é a SSIM negativa entre a imagem borrada real y e a reconstrução
     y_hat = x^L (*) H^L."""
     y_hat = conv_same(x_L, H_L)
-    _ssim = ssim(y_hat, y) if x is None else ssim(x_L, x)
+    _ssim = ssim4deep_url(y_hat, y) if x is None else ssim4deep_url(x_L, x)
     x_tv = tv_loss(x_L)
     loss = (1.0 - _ssim) + lambda_tv * x_tv
     return loss, _ssim, x_tv, y_hat

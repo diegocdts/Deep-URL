@@ -96,17 +96,17 @@ def train_deep_url(y: torch.Tensor, x: torch.Tensor = None, kernel_size: int = 1
  
     for epoch in range(1, epochs + 1):
         optimizer.zero_grad()
-        x_L, H_L = model(y, x0, H0)                                      # laço interno (linhas 2-5)
+        x_L, H_L = model(y, x0, H0)                                     # laço interno (linhas 2-5)
         loss, _ssim, x_tv, _ = deep_url_loss(y, x_L, H_L, lambda_tv)    # linha 6: gradiente de Eq. (6)
         loss.backward()
-        optimizer.step()                                                 # linha 7: atualiza Upsilon
+        optimizer.step()                                                # linha 7: atualiza Upsilon
         scheduler.step()
  
         # Linha 8: realimenta o estado para a próxima época
         x0 = x_L.detach()
         H0 = H_L.detach()
  
-        if verbose and (epoch % max(1, epochs // 100) == 0 or epoch == 1):
+        if verbose:
             print(f"  época {epoch:4d}/{epochs} - perda: {loss.item():.4f} - _ssim: {_ssim:.4f} - x_tv: {x_tv:.4f}")
 
         if lower_loss is None or loss < lower_loss:
