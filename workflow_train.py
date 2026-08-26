@@ -10,9 +10,10 @@ torch.manual_seed(42)
 # 6. CONFIGURAÇÕES
 # ============================================================
 
+is_supervised = True
 Y_PATH = "/home/data/IN.npy"
 X_PATH = "/home/data/RFLT.npy"
-SUP_AUTOSUP = 'supervised' if X_PATH is not None else 'self-supervised'
+SUP_AUTOSUP = 'supervised' if is_supervised else 'self-supervised'
 KERNEL_SIZE = 3
 NUM_LAYERS = 5
 EPOCHS = 5000
@@ -62,9 +63,12 @@ print(f'Imagem blurred: {y.shape}', f'min: {y.min()} - max: {y.max()}')
 if X_PATH is not None:
     x = load_data(data_path=X_PATH, batch=N_PATCHES[0]*N_PATCHES[1], height=HEIGHT, width=WIDTH)
     print(f'Imagem limpa:   {x.shape}', f'min: {x.min()} - max: {x.max()}')
-    print('TREINAMENTO SUPERVISIONADO')
 else:
     x = None
+
+if is_supervised:
+    print('TREINAMENTO SUPERVISIONADO')
+else:
     print('TREINAMENTO AUTO-SUPERVISIONADO')
 
 
@@ -74,7 +78,7 @@ else:
 
 
 x_hat, H_hat, model = train_deep_url(
-    y, x,
+    y=y, x=x,
     kernel_size=KERNEL_SIZE,
     num_layers=NUM_LAYERS,
     epochs=EPOCHS,
@@ -82,7 +86,8 @@ x_hat, H_hat, model = train_deep_url(
     lambda_tv=LAMBDA_TV,
     device=DEVICE,
     model_path=MODEL_PATH,
-    results_dir=RESULTS_DIR
+    results_dir=RESULTS_DIR,
+    is_supervised=is_supervised
 )
 
 y_np = y.detach().cpu().numpy()

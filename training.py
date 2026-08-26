@@ -58,7 +58,7 @@ from visualization import plot_lower_loss
 def train_deep_url(y: torch.Tensor, x: torch.Tensor = None, kernel_size: int = 15, num_layers: int = 5,
                     epochs: int = 500, lr: float = 0.1, lambda_tv: float = 0.1,
                     decay_factor: float = 0.1, device: str = "cpu",
-                    verbose: bool = True, model_path: str = None, results_dir = None):
+                    verbose: bool = True, model_path: str = None, results_dir = None, is_supervised: bool = False):
     """
     Reproduz o Algoritmo 1 (DEEP-URL) do artigo.
  
@@ -76,6 +76,8 @@ def train_deep_url(y: torch.Tensor, x: torch.Tensor = None, kernel_size: int = 1
                      observado no artigo, Seção 3, último parágrafo).
     """
     y = y.to(device)
+    if x is not None:
+        x = x.to(device)
     B, C, H_img, W_img = y.shape
     assert C == 1, "Esta implementação assume imagens em escala de cinza."
     assert model_path is not None, "O path para o modelo precisa ser definido"
@@ -97,7 +99,7 @@ def train_deep_url(y: torch.Tensor, x: torch.Tensor = None, kernel_size: int = 1
     for epoch in range(1, epochs + 1):
         optimizer.zero_grad()
         x_L, H_L = model(y, x0, H0)                                     # laço interno (linhas 2-5)
-        loss, _ssim, x_tv, _ = deep_url_loss(y, x_L, H_L, lambda_tv)    # linha 6: gradiente de Eq. (6)
+        loss, _ssim, x_tv, _ = deep_url_loss(y=y, x=x, x_L=x_L, H_L=H_L, lambda_tv=lambda_tv, is_supervised=is_supervised)    # linha 6: gradiente de Eq. (6)
         loss.backward()
         optimizer.step()                                                # linha 7: atualiza Upsilon
         scheduler.step()
@@ -111,7 +113,7 @@ def train_deep_url(y: torch.Tensor, x: torch.Tensor = None, kernel_size: int = 1
 
         if lower_loss is None or loss < lower_loss:
             lower_loss = loss
-            plot_lower_loss(blur_image=y.detach().cpu().numpy(), x_hat=x0.cpu().numpy(), ground_truth=x, results_dir=results_dir, epoch=epoch)          
+            plot_lower_loss(blur_image=y.detach().cpu().numpy(), x_hat=x0.cpu().numpy(), ground_truth=x.detach().cpu().numpy(), results_dir=results_dir, epoch=epoch)          
 
     
     # Salvar modelo

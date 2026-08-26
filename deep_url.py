@@ -136,12 +136,12 @@ def tv_loss(img: torch.Tensor) -> torch.Tensor:
  
  
 def deep_url_loss(y: torch.Tensor, x_L: torch.Tensor, H_L: torch.Tensor,
-                   lambda_tv: float = 0.1, x: torch.Tensor = None):
+                   lambda_tv: float = 0.1, x: torch.Tensor = None, is_supervised: bool = False):
     """L(x^L (*) H^L, y) + lambda * TV(x^L), Eq. (6).
     L(.) é a SSIM negativa entre a imagem borrada real y e a reconstrução
     y_hat = x^L (*) H^L."""
     y_hat = conv_same(x_L, H_L)
-    _ssim = ssim4deep_url(y_hat, y) if x is None else ssim4deep_url(x_L, x)
+    _ssim = ssim4deep_url(x_L, x) if is_supervised and x is not None else ssim4deep_url(y_hat, y)
     x_tv = tv_loss(x_L)
     loss = (1.0 - _ssim) + lambda_tv * x_tv
     return loss, _ssim, x_tv, y_hat
